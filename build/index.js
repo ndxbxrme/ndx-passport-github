@@ -1,13 +1,15 @@
 (function() {
   'use strict';
   module.exports = function(ndx) {
-    var GithubStrategy, ObjectID;
+    var GithubStrategy, ObjectID, scopes;
     GithubStrategy = require('passport-github').Strategy;
     ObjectID = require('bson-objectid');
     ndx.settings.GITHUB_KEY = process.env.GITHUB_KEY || ndx.settings.GITHUB_KEY;
     ndx.settings.GITHUB_SECRET = process.env.GITHUB_SECRET || ndx.settings.GITHUB_SECRET;
     ndx.settings.GITHUB_CALLBACK = process.env.GITHUB_CALLBACK || ndx.settings.GITHUB_CALLBACK;
+    ndx.settings.GITHUB_SCOPE = process.env.GITHUB_SCOPE || ndx.settings.GITHUB_SCOPE || 'user,user:email';
     if (ndx.settings.GITHUB_KEY) {
+      scopes = ndx.passport.splitScopes(ndx.settings.GITHUB_SCOPE);
       ndx.passport.use(new GithubStrategy({
         clientID: ndx.settings.GITHUB_KEY,
         clientSecret: ndx.settings.GITHUB_SECRET,
@@ -56,11 +58,11 @@
         }
       }));
       ndx.app.get('/api/github', ndx.passport.authenticate('github', {
-        scope: ['user', 'user:email']
+        scope: scopes
       }), ndx.postAuthenticate);
       ndx.app.get('/api/github/callback', ndx.passport.authenticate('github'), ndx.postAuthenticate);
       ndx.app.get('/api/connect/github', ndx.passport.authorize('github', {
-        scope: ['user', 'user:email'],
+        scope: scopes,
         successRedirect: '/profile'
       }));
       return ndx.app.get('/api/unlink/github', function(req, res) {

@@ -6,7 +6,9 @@ module.exports = (ndx) ->
   ndx.settings.GITHUB_KEY = process.env.GITHUB_KEY or ndx.settings.GITHUB_KEY
   ndx.settings.GITHUB_SECRET = process.env.GITHUB_SECRET or ndx.settings.GITHUB_SECRET
   ndx.settings.GITHUB_CALLBACK = process.env.GITHUB_CALLBACK or ndx.settings.GITHUB_CALLBACK
+  ndx.settings.GITHUB_SCOPE = process.env.GITHUB_SCOPE or ndx.settings.GITHUB_SCOPE or 'user,user:email'
   if ndx.settings.GITHUB_KEY
+    scopes = ndx.passport.splitScopes ndx.settings.GITHUB_SCOPE
     ndx.passport.use new GithubStrategy
       clientID: ndx.settings.GITHUB_KEY
       clientSecret: ndx.settings.GITHUB_SECRET
@@ -49,19 +51,11 @@ module.exports = (ndx) ->
           req.user._id
         ]
         return done null, req.user
-    ndx.app.get '/api/github', ndx.passport.authenticate('github', scope: [
-      'user'
-      'user:email'
-    ])
+    ndx.app.get '/api/github', ndx.passport.authenticate('github', scope: scopes)
     , ndx.postAuthenticate
     ndx.app.get '/api/github/callback', ndx.passport.authenticate('github')
     , ndx.postAuthenticate
-    ndx.app.get '/api/connect/github', ndx.passport.authorize('github',
-      scope: [
-        'user'
-        'user:email'
-      ]
-      successRedirect: '/profile')
+    ndx.app.get '/api/connect/github', ndx.passport.authorize('github', scope: scopes, successRedirect: '/profile')
     ndx.app.get '/api/unlink/github', (req, res) ->
       user = req.user
       user.github.token = undefined
