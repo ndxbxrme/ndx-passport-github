@@ -55,7 +55,9 @@ module.exports = (ndx) ->
     , ndx.postAuthenticate
     ndx.app.get '/api/github/callback', ndx.passport.authenticate('github')
     , ndx.postAuthenticate
-    ndx.app.get '/api/connect/github', ndx.passport.authorize('github', scope: scopes, successRedirect: '/profile')
+    ndx.app.get '/api/connect/github', ndx.passport.authorize('github',
+      scope: scopes
+      successRedirect: '/profile')
     ndx.app.get '/api/unlink/github', (req, res) ->
       user = req.user
       user.github.token = undefined
