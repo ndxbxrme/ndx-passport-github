@@ -15,7 +15,7 @@ module.exports = (ndx) ->
       callbackURL: ndx.settings.GITHUB_CALLBACK
       passReqToCallback: true
     , (req, token, refreshToken, profile, done) ->
-      if not req user
+      if not req.user
         users = ndx.database.exec 'SELECT * FROM ' + ndx.settings.USER_TABLE + ' WHERE github->id=?', [profile.id]
         if users and users.length
           if not users[0].github.token
@@ -25,7 +25,7 @@ module.exports = (ndx) ->
                 name: profile.displayName
                 email: profile.emails[0].value
               },
-              req.user._id
+              users[0]._id
             ]
             return done null, users[0]
           return done null, users[0]
