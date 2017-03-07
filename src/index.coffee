@@ -16,30 +16,32 @@ module.exports = (ndx) ->
       passReqToCallback: true
     , (req, token, refreshToken, profile, done) ->
       if not req.user
-        users = ndx.database.select ndx.settings.USER_TABLE,
-          github:
-            id: profile.id
-        if users and users.length
-          if not users[0].github.token
-            ndx.database.update ndx.settings.USER_TABLE,
+        ndx.database.select ndx.settings.USER_TABLE,
+          where:
+            github:
+              id: profile.id
+        , (users) ->
+          if users and users.length
+            if not users[0].github.token
+              ndx.database.update ndx.settings.USER_TABLE,
+                github:
+                  token: token
+                  name: profile.displayName
+                  email: profile.emails[0].value
+              , _id: users[0]._id
+              return done null, users[0]
+            return done null, users[0]
+          else
+            newUser = 
+              _id: ObjectID.generate()
+              email: profile.emails[0].value
               github:
+                id: profile.id
                 token: token
                 name: profile.displayName
                 email: profile.emails[0].value
-            , _id: users[0]._id
-            return done null, users[0]
-          return done null, users[0]
-        else
-          newUser = 
-            _id: ObjectID.generate()
-            email: profile.emails[0].value
-            github:
-              id: profile.id
-              token: token
-              name: profile.displayName
-              email: profile.emails[0].value
-          ndx.database.insert ndx.settings.USER_TABLE, newUser
-          return done null, newUser
+            ndx.database.insert ndx.settings.USER_TABLE, newUser
+            return done null, newUser
       else
         ndx.database.update ndx.settings.USER_TABLE,
           github:

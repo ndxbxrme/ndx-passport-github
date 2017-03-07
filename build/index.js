@@ -16,41 +16,44 @@
         callbackURL: ndx.settings.GITHUB_CALLBACK,
         passReqToCallback: true
       }, function(req, token, refreshToken, profile, done) {
-        var newUser, users;
         if (!req.user) {
-          users = ndx.database.select(ndx.settings.USER_TABLE, {
-            github: {
-              id: profile.id
+          return ndx.database.select(ndx.settings.USER_TABLE, {
+            where: {
+              github: {
+                id: profile.id
+              }
             }
-          });
-          if (users && users.length) {
-            if (!users[0].github.token) {
-              ndx.database.update(ndx.settings.USER_TABLE, {
+          }, function(users) {
+            var newUser;
+            if (users && users.length) {
+              if (!users[0].github.token) {
+                ndx.database.update(ndx.settings.USER_TABLE, {
+                  github: {
+                    token: token,
+                    name: profile.displayName,
+                    email: profile.emails[0].value
+                  }
+                }, {
+                  _id: users[0]._id
+                });
+                return done(null, users[0]);
+              }
+              return done(null, users[0]);
+            } else {
+              newUser = {
+                _id: ObjectID.generate(),
+                email: profile.emails[0].value,
                 github: {
+                  id: profile.id,
                   token: token,
                   name: profile.displayName,
                   email: profile.emails[0].value
                 }
-              }, {
-                _id: users[0]._id
-              });
-              return done(null, users[0]);
+              };
+              ndx.database.insert(ndx.settings.USER_TABLE, newUser);
+              return done(null, newUser);
             }
-            return done(null, users[0]);
-          } else {
-            newUser = {
-              _id: ObjectID.generate(),
-              email: profile.emails[0].value,
-              github: {
-                id: profile.id,
-                token: token,
-                name: profile.displayName,
-                email: profile.emails[0].value
-              }
-            };
-            ndx.database.insert(ndx.settings.USER_TABLE, newUser);
-            return done(null, newUser);
-          }
+          });
         } else {
           ndx.database.update(ndx.settings.USER_TABLE, {
             github: {
