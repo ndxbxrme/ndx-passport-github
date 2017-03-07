@@ -1,13 +1,23 @@
 'use strict'
 
+GithubStrategy = require('passport-github').Strategy
+ObjectID = require 'bson-objectid'
+objtrans = require 'objtrans'
+
 module.exports = (ndx) ->
-  GithubStrategy = require('passport-github').Strategy
-  ObjectID = require 'bson-objectid'
   ndx.settings.GITHUB_KEY = process.env.GITHUB_KEY or ndx.settings.GITHUB_KEY
   ndx.settings.GITHUB_SECRET = process.env.GITHUB_SECRET or ndx.settings.GITHUB_SECRET
   ndx.settings.GITHUB_CALLBACK = process.env.GITHUB_CALLBACK or ndx.settings.GITHUB_CALLBACK
   ndx.settings.GITHUB_SCOPE = process.env.GITHUB_SCOPE or ndx.settings.GITHUB_SCOPE or 'user,user:email'
   if ndx.settings.GITHUB_KEY
+    if not ndx.transforms.github
+      ndx.transforms.github =
+        email: 'profile.emails[0].value'
+        github:
+          id: 'profile.id'
+          token: 'token'
+          name: 'profile.displayName'
+          email: 'profile.emails[0].value'
     scopes = ndx.passport.splitScopes ndx.settings.GITHUB_SCOPE
     ndx.passport.use new GithubStrategy
       clientID: ndx.settings.GITHUB_KEY
@@ -23,33 +33,27 @@ module.exports = (ndx) ->
         , (users) ->
           if users and users.length
             if not users[0].github.token
-              ndx.database.update ndx.settings.USER_TABLE,
-                github:
-                  token: token
-                  name: profile.displayName
-                  email: profile.emails[0].value
-              , _id: users[0]._id
+              updateUser = objtrans
+                token: token
+                profile: profile
+              , ndx.transforms.github
+              ndx.database.update ndx.settings.USER_TABLE, updateUser, _id: users[0]._id
               return done null, users[0]
             return done null, users[0]
           else
-            newUser = 
-              _id: ObjectID.generate()
-              email: profile.emails[0].value
-              github:
-                id: profile.id
-                token: token
-                name: profile.displayName
-                email: profile.emails[0].value
+            newUser = objtrans
+              token: token
+              profile: profile
+            , ndx.transforms.github
+            newUser._id = ObjectID.generate()
             ndx.database.insert ndx.settings.USER_TABLE, newUser
             return done null, newUser
       else
-        ndx.database.update ndx.settings.USER_TABLE,
-          github:
-            id: profile.id
-            token: token
-            name: profile.displayName
-            email: profile.emails[0].value
-        , _id: req.user._id
+        updateUser = objtrans
+          token: token
+          profile: profile
+        , ndx.transforms.github
+        ndx.database.update ndx.settings.USER_TABLE, updateUser, _id: req.user._id
         return done null, req.user
     ndx.app.get '/api/github', ndx.passport.authenticate('github', scope: scopes)
     , ndx.postAuthenticate
