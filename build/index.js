@@ -34,7 +34,7 @@
         passReqToCallback: true
       }, function(req, token, refreshToken, profile, done) {
         var updateUser, where;
-        if (!req.user) {
+        if (!ndx.user) {
           return ndx.database.select(ndx.settings.USER_TABLE, {
             where: {
               github: {
@@ -71,9 +71,9 @@
             profile: profile
           }, ndx.transforms.github);
           where = {};
-          where[ndx.settings.AUTO_ID] = req.user[ndx.settings.AUTO_ID];
+          where[ndx.settings.AUTO_ID] = ndx.user[ndx.settings.AUTO_ID];
           ndx.database.update(ndx.settings.USER_TABLE, updateUser, where);
-          return done(null, req.user);
+          return done(null, ndx.user);
         }
       }));
       ndx.app.get('/api/github', ndx.passport.authenticate('github', {
@@ -86,7 +86,7 @@
       }));
       return ndx.app.get('/api/unlink/github', function(req, res) {
         var user;
-        user = req.user;
+        user = ndx.user;
         user.github.token = void 0;
         user.save(function(err) {
           res.redirect('/profile');

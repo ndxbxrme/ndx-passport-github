@@ -25,7 +25,7 @@ module.exports = (ndx) ->
       callbackURL: ndx.settings.GITHUB_CALLBACK
       passReqToCallback: true
     , (req, token, refreshToken, profile, done) ->
-      if not req.user
+      if not ndx.user
         ndx.database.select ndx.settings.USER_TABLE,
           where:
             github:
@@ -56,9 +56,9 @@ module.exports = (ndx) ->
           profile: profile
         , ndx.transforms.github
         where = {}
-        where[ndx.settings.AUTO_ID] = req.user[ndx.settings.AUTO_ID]
+        where[ndx.settings.AUTO_ID] = ndx.user[ndx.settings.AUTO_ID]
         ndx.database.update ndx.settings.USER_TABLE, updateUser, where
-        return done null, req.user
+        return done null, ndx.user
     ndx.app.get '/api/github', ndx.passport.authenticate('github', scope: scopes)
     , ndx.postAuthenticate
     ndx.app.get '/api/github/callback', ndx.passport.authenticate('github')
@@ -67,7 +67,7 @@ module.exports = (ndx) ->
       scope: scopes
       successRedirect: '/profile')
     ndx.app.get '/api/unlink/github', (req, res) ->
-      user = req.user
+      user = ndx.user
       user.github.token = undefined
       user.save (err) ->
         res.redirect '/profile'
