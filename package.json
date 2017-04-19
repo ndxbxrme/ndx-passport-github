@@ -1,6 +1,6 @@
 {
   "name": "ndx-passport-github",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "github plugin for ndx-passport",
   "main": "build/index.js",
   "scripts": {
@@ -25,7 +25,6 @@
     "load-grunt-tasks": "^3.5.2"
   },
   "dependencies": {
-    "bson-objectid": "^1.1.5",
     "objtrans": "0.0.5",
     "passport-github": "^1.1.0"
   }
