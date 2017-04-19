@@ -1,7 +1,6 @@
 'use strict'
 
 GithubStrategy = require('passport-github').Strategy
-ObjectID = require 'bson-objectid'
 objtrans = require 'objtrans'
 
 module.exports = (ndx) ->
@@ -49,7 +48,7 @@ module.exports = (ndx) ->
               token: token
               profile: profile
             , ndx.transforms.github
-            newUser[ndx.settings.AUTO_ID] = ObjectID.generate()
+            newUser[ndx.settings.AUTO_ID] = ndx.generateID()
             ndx.database.insert ndx.settings.USER_TABLE, newUser, null, true
             ndx.user = newUser
             return done null, newUser
