@@ -1,6 +1,6 @@
 {
   "name": "ndx-passport-github",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "github plugin for ndx-passport",
   "main": "build/index.js",
   "scripts": {
